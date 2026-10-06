@@ -1,0 +1,47 @@
+name: Test REG.RU docs FTPS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/test-reg.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      REG_HOST: server169.hosting.reg.ru
+      REG_USER: u3652448_docs
+      REG_PASSWORD: ${{ secrets.DOCS_REG_PASSWORD }}
+
+    steps:
+      - name: Install FTPS client
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Test read-only FTPS access
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$REG_PASSWORD"
+
+          lftp -u "$REG_USER","$REG_PASSWORD" "ftp://$REG_HOST:21" -e "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ftp:passive-mode true;
+            set ssl:verify-certificate no;
+            set net:max-retries 2;
+            set net:timeout 20;
+            cd /;
+            pwd;
+            cls -1;
+            bye
+          " | tee /tmp/docs-listing.txt
+
+          grep -Fxq 'index.html' /tmp/docs-listing.txt
+          echo 'REG.RU docs FTPS connection OK'

@@ -1,0 +1,71 @@
+name: Deploy docs to REG.RU
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.deploy-now'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ls-docs-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      REG_HOST: server169.hosting.reg.ru
+      REG_USER: u3652448_docs
+      REG_PATH: /
+      REG_PASSWORD: ${{ secrets.DOCS_REG_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install FTPS client
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Validate deployment settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$REG_PASSWORD"
+          test -d site
+          test -f site/index.html
+
+      - name: Deploy site over FTPS
+        shell: bash
+        run: |
+          set -euo pipefail
+          lftp -u "$REG_USER","$REG_PASSWORD" "ftp://$REG_HOST:21" -e "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ftp:passive-mode true;
+            set ssl:verify-certificate no;
+            set net:max-retries 2;
+            set net:timeout 25;
+            cd \"$REG_PATH\";
+            mirror -R --verbose --exclude-glob .git* --exclude-glob .github* site/ ./;
+            bye
+          "
+
+      - name: Verify live site
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsSL --connect-timeout 10 --max-time 30               -H 'Cache-Control: no-cache'               -H 'Pragma: no-cache'               "https://docs.liniyasporta.ru/?deploy=${GITHUB_SHA}"               -o /tmp/live-index.html; then
+              break
+            fi
+            [ "$attempt" -eq 6 ] && exit 1
+            sleep 5
+          done
+          grep -Fq 'Документы — Линия спорта' /tmp/live-index.html
+          echo 'docs.liniyasporta.ru is reachable after deploy'

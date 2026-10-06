@@ -1,0 +1,144 @@
+name: Import current live docs site
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/import-live.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download current live site over HTTPS
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from urllib.parse import urljoin, urlparse
+          import xml.etree.ElementTree as ET
+          import re, shutil
+
+          BASE = "https://docs.liniyasporta.ru/"
+          HOST = urlparse(BASE).netloc
+          OUT = Path("site")
+
+          if OUT.exists():
+              shutil.rmtree(OUT)
+          OUT.mkdir(parents=True)
+
+          def get(url):
+              req = Request(url, headers={
+                  "User-Agent": "Mozilla/5.0 (compatible; ls-docs-import/1.0)",
+                  "Cache-Control": "no-cache",
+              })
+              with urlopen(req, timeout=30) as r:
+                  return r.read(), r.headers.get_content_type()
+
+          def save_url(url, data):
+              p = urlparse(url)
+              path = p.path
+              if path == "/" or path == "":
+                  target = OUT / "index.html"
+              elif path.endswith("/"):
+                  target = OUT / path.lstrip("/") / "index.html"
+              else:
+                  target = OUT / path.lstrip("/")
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(data)
+              return target
+
+          routes = []
+          try:
+              sm_data, _ = get(urljoin(BASE, "sitemap.xml"))
+              (OUT / "sitemap.xml").write_bytes(sm_data)
+              root = ET.fromstring(sm_data)
+              ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+              routes = [x.text.strip() for x in root.findall(".//sm:loc", ns) if x.text]
+          except Exception as e:
+              print("sitemap fetch failed:", e)
+
+          if not routes:
+              routes = [
+                  BASE,
+                  urljoin(BASE, "oferta/"),
+                  urljoin(BASE, "rules/"),
+                  urljoin(BASE, "safetyrules/"),
+                  urljoin(BASE, "agreement_application/"),
+                  urljoin(BASE, "privacy/"),
+                  urljoin(BASE, "agreement/"),
+                  urljoin(BASE, "refund/"),
+                  urljoin(BASE, "purchase/"),
+              ]
+
+          asset_urls = set()
+          attr_re = re.compile(r"""(?:src|href)\s*=\s*["']([^"']+)["']""", re.I)
+          css_url_re = re.compile(r"""url\(\s*['"]?([^)'"]+)['"]?\s*\)""", re.I)
+
+          for url in routes:
+              if urlparse(url).netloc != HOST:
+                  continue
+              data, ctype = get(url)
+              target = save_url(url, data)
+              print("saved", url, "->", target)
+              if "html" in ctype or target.suffix.lower() in {".html", ".htm"}:
+                  text = data.decode("utf-8", errors="ignore")
+                  for ref in attr_re.findall(text):
+                      absolute = urljoin(url, ref)
+                      p = urlparse(absolute)
+                      if p.netloc == HOST and p.path.startswith("/assets/"):
+                          asset_urls.add(absolute.split("#",1)[0].split("?",1)[0])
+
+          for name in ("robots.txt", "sitemap.xml"):
+              try:
+                  data, _ = get(urljoin(BASE, name))
+                  (OUT / name).write_bytes(data)
+              except Exception as e:
+                  print(name, "fetch failed:", e)
+
+          done = set()
+          while asset_urls - done:
+              url = sorted(asset_urls - done)[0]
+              done.add(url)
+              data, _ = get(url)
+              target = save_url(url, data)
+              print("saved asset", url, "->", target)
+              if target.suffix.lower() == ".css":
+                  text = data.decode("utf-8", errors="ignore")
+                  for ref in css_url_re.findall(text):
+                      if ref.startswith("data:"):
+                          continue
+                      absolute = urljoin(url, ref)
+                      p = urlparse(absolute)
+                      if p.netloc == HOST and p.path.startswith("/assets/"):
+                          asset_urls.add(absolute.split("#",1)[0].split("?",1)[0])
+
+          print("Imported files:")
+          for p in sorted(OUT.rglob("*")):
+              if p.is_file():
+                  print(p)
+          PY
+
+      - name: Commit imported snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A site
+          if git diff --cached --quiet; then
+            echo "Live site already matches repository snapshot."
+            exit 0
+          fi
+          git commit -m "Import current live docs site"
+          git push

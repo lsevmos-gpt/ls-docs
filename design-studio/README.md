@@ -6,7 +6,7 @@
 - 1 управляющий skill: ls-design-studio.
 - 8 специализированных skills: ls-typography, ls-interior, ls-signage, ls-pictograms, ls-print, ls-brand, ls-design-critic, ls-digital-display.
 - 5 Codex subagents: ls_creative_director, ls_typographer, ls_interior_designer, ls_signage_designer, ls_design_critic.
-- Правила AGENTS.md, установка для Windows/macOS/Linux, инструкция проекта ChatGPT, контрольный список.
+- Правила AGENTS.md, установка для Windows/macOS/Linux, инструкция проекта ChatGPT, контрольный список и четыре приёмочных сценария.
 
 ## Установка в Codex
 Если работаете непосредственно в клонированном ls-docs, Codex автоматически читает корневой AGENTS.md, skills из .agents/skills и проектных агентов .codex/agents.
@@ -15,7 +15,7 @@
 - Windows PowerShell: powershell -File .\design-studio\install.ps1
 - macOS/Linux: bash ./design-studio/install.sh
 
-Скрипты устанавливают пользовательские skills в ~/.agents/skills и субагентов в ~/.codex/agents только если файлов с такими именами ещё нет. Они ничего не удаляют, не перезаписывают и не изменяют глобальный ~/.codex/AGENTS.md. Уже установленные файлы обновляются вручную после сверки изменений. После установки перезапустите Codex. Проверка: /skills, затем запрос «Разработай квадратный знак для скалодрома Линии спорта, используй ls-design-studio и ls-design-critic».
+Скрипты устанавливают пользовательские skills в ~/.agents/skills и субагентов в ~/.codex/agents только если файлов с такими именами ещё нет. Они ничего не удаляют, не перезаписывают и не изменяют глобальный ~/.codex/AGENTS.md. Уже установленные файлы обновляются вручную после сверки изменений. После установки перезапустите Codex. Для статической проверки из корня репозитория: python design-studio/check-pack.py. Приёмочные сценарии: design-studio/test-scenarios.md. Проверка работы Codex: /skills, затем запрос «Разработай квадратный знак для скалодрома Линии спорта, используй ls-design-studio и ls-design-critic».
 
 Наличие этих файлов в GitHub НЕ означает, что навыки автоматически доступны из любого другого уже открытого репозитория, пока пользовательская установка не выполнена.
 

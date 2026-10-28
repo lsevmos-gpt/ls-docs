@@ -31,6 +31,7 @@ jobs:
           test -n "$REG_PASSWORD"
 
           lftp -u "$REG_USER","$REG_PASSWORD" "ftp://$REG_HOST:21" -e "
+            set cmd:fail-exit true;
             set ftp:ssl-force true;
             set ftp:ssl-protect-data true;
             set ftp:passive-mode true;
@@ -45,3 +46,5 @@ jobs:
 
           grep -Fxq 'index.html' /tmp/docs-listing.txt
           echo 'REG.RU docs FTPS connection OK'
+
+# Read-only verification after REG.RU FTP credentials repair (2026-10-28).

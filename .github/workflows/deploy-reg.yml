@@ -29,6 +29,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check legal revision publication dates
+        run: python3 scripts/legal_release.py check --for-deploy
+
       - name: Install FTPS client
         run: sudo apt-get update && sudo apt-get install -y lftp
 

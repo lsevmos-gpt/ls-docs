@@ -19,6 +19,16 @@ class LegalReleaseTests(unittest.TestCase):
         shutil.copytree(ROOT/'legal',self.root/'legal')
         for name in ['oferta','rules','archive']:
             shutil.copytree(ROOT/'site'/name,self.root/'site'/name)
+        # Each test starts before first publication, even when the repository
+        # already contains the announced production revision.
+        meta_path=self.root/'legal/2026-11-13/release.json'
+        meta=json.loads(meta_path.read_text())
+        meta.update(status='prepared',publication_date=None,effective_date=None)
+        meta_path.write_text(json.dumps(meta,ensure_ascii=False)+'\n')
+        draft='<section class="legal-revision" data-legal-revision="2026-11-13" data-publication-state="draft"><p>Проект редакции</p></section>'
+        for name in ['oferta','rules']:
+            path=self.root/'site'/name/'index.html'
+            path.write_text(release.NOTICE.sub(lambda match: draft,path.read_text()))
         self.day=date(2026,11,13)
 
     def tearDown(self):

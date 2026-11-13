@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the coordinated 6D amendment and date its publication explicitly."""
+"""Validate the coordinated offer revision and date its publication explicitly."""
 import argparse
 from datetime import date, datetime, timedelta
 from html import escape
@@ -65,7 +65,8 @@ def check(root, for_deploy=False, now=None):
         parser.feed(source)
         count = 2 if kind == 'oferta' else 1
         for key, value in expected.items():
-            wanted = 0 if key.startswith('3.') and kind == 'rules' else count
+            main_only = key.startswith(('3.', 'main.'))
+            wanted = 0 if main_only and kind == 'rules' else count
             values = parser.values.get(key, [])
             if len(values) != wanted or any(v != value for v in values):
                 raise ValueError(f'{kind}: inconsistent clause {key}')
@@ -137,7 +138,8 @@ def stamp(root, publication, now=None):
         f'Опубликовано {published_ru}. Новая редакция вступает в силу {active_ru}.\n'
         'Уточняются проход по QR-коду и браслету в клубе на Героев Сталинграда, 6Д, '
         'временное пользование шкафчиками и ячейками, исключение для оплаченной аренды, '
-        'действия при сбоях, порядок возврата забытых вещей, а также абонементы на групповой и индивидуальный фитнес.\n'
+        'действия при сбоях, порядок возврата забытых вещей, абонементы на групповой и индивидуальный фитнес, '
+        'посещение сауны и пользование детскими комнатами под присмотром родителей.\n'
         f'Документы: {DOMAIN}/oferta/ и {DOMAIN}/rules/.\n'
         'До указанной даты применяется предыдущая редакция, доступная по ссылке в документах. '
         'Новая редакция не вводит автоматическую платную аренду, хранение или штрафы.\n'

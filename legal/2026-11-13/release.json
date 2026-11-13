@@ -11,5 +11,20 @@
   "fitness_scope_addresses": [
     "Симферополь, ул. Героев Сталинграда, д. 6Д",
     "Симферополь, ул. 1-й Конной Армии, д. 25А"
+  ],
+  "sauna_scope_addresses": [
+    "Симферополь, ул. Героев Сталинграда, д. 6Д",
+    "Симферополь, ул. 1-й Конной Армии, д. 25А"
+  ],
+  "children_room_scope_addresses": [
+    "Симферополь, ул. Героев Сталинграда, д. 6Д",
+    "Симферополь, ул. 1-й Конной Армии, д. 25А"
+  ],
+  "prepared_subjects": [
+    "electronic_access_6d",
+    "temporary_lockers",
+    "fitness",
+    "sauna",
+    "children_rooms"
   ]
 }

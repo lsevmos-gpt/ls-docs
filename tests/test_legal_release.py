@@ -67,6 +67,17 @@ class LegalReleaseTests(unittest.TestCase):
         for name,data in before.items():
             self.assertEqual(data,(archive/name/'index.html').read_bytes())
 
+    def test_changed_sauna_or_children_copy_blocks_release(self):
+        path=self.root/'site/rules/index.html'
+        original=path.read_text()
+        clauses=json.loads((self.root/'legal/2026-11-13/clauses.json').read_text())
+        for key in ['13.11','33.3']:
+            with self.subTest(clause=key):
+                path.write_text(original.replace(clauses[key], 'Несогласованная редакция', 1))
+                with self.assertRaisesRegex(ValueError, 'inconsistent clause'):
+                    release.check(self.root)
+        path.write_text(original)
+
 
 if __name__=='__main__':
     unittest.main()

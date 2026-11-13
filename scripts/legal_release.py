@@ -11,7 +11,7 @@ import urllib.error
 import urllib.request
 from zoneinfo import ZoneInfo
 
-REVISION = '2026-11-11'
+REVISION = '2026-11-13'
 TARGETS = ('oferta', 'rules')
 DOMAIN = 'https://docs.liniyasporta.ru'
 NOTICE = re.compile(r'<section class="legal-revision"[^>]*>.*?</section>', re.S)
@@ -65,7 +65,7 @@ def check(root, for_deploy=False, now=None):
         parser.feed(source)
         count = 2 if kind == 'oferta' else 1
         for key, value in expected.items():
-            wanted = 0 if key == '3.9' and kind == 'rules' else count
+            wanted = 0 if key.startswith('3.') and kind == 'rules' else count
             values = parser.values.get(key, [])
             if len(values) != wanted or any(v != value for v in values):
                 raise ValueError(f'{kind}: inconsistent clause {key}')
@@ -121,7 +121,7 @@ def stamp(root, publication, now=None):
     for kind in TARGETS:
         path = root / 'site' / kind / 'index.html'
         notice = f'''<section class="legal-revision" data-legal-revision="{REVISION}" data-publication-state="announced">
-<p><b>Редакция от 11 ноября 2026 года</b></p>
+<p><b>Редакция от 13 ноября 2026 года</b></p>
 <p>Дата опубликования: <time datetime="{publication.isoformat()}">{published_ru}</time>. Вступает в силу: <time datetime="{active.isoformat()}">{active_ru}</time>.</p>
 <p>До даты вступления в силу применяется <a href="{meta['archive_base']}/{kind}/">предыдущая редакция</a>. Новые положения не применяются задним числом; права по ранее заключённым договорам и согласованные условия оплаченных услуг сохраняются в пределах закона.</p>
 </section>'''
@@ -137,7 +137,7 @@ def stamp(root, publication, now=None):
         f'Опубликовано {published_ru}. Новая редакция вступает в силу {active_ru}.\n'
         'Уточняются проход по QR-коду и браслету в клубе на Героев Сталинграда, 6Д, '
         'временное пользование шкафчиками и ячейками, исключение для оплаченной аренды, '
-        'действия при сбоях и порядок возврата забытых вещей.\n'
+        'действия при сбоях, порядок возврата забытых вещей, а также абонементы на групповой и индивидуальный фитнес.\n'
         f'Документы: {DOMAIN}/oferta/ и {DOMAIN}/rules/.\n'
         'До указанной даты применяется предыдущая редакция, доступная по ссылке в документах. '
         'Новая редакция не вводит автоматическую платную аренду, хранение или штрафы.\n'

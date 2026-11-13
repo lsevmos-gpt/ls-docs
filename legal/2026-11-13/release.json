@@ -1,0 +1,15 @@
+{
+  "revision": "2026-11-13",
+  "status": "prepared",
+  "publication_date": null,
+  "effective_date": null,
+  "original_offer_date": "2026-03-05",
+  "club_opening_reference": "2026-09-28",
+  "minimum_notice_days": 10,
+  "scope_address": "Симферополь, ул. Героев Сталинграда, д. 6Д",
+  "archive_base": "/archive/2026-11-13-before-update",
+  "fitness_scope_addresses": [
+    "Симферополь, ул. Героев Сталинграда, д. 6Д",
+    "Симферополь, ул. 1-й Конной Армии, д. 25А"
+  ]
+}
